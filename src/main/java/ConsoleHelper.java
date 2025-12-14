@@ -22,7 +22,7 @@ public class ConsoleHelper {
                 break;
             } catch (IOException e) {
                 System.out.println("Произошла ошибка при попытке ввода текста. " +
-                        "Попробуйте еще раз.");;
+                        "Попробуйте еще раз.");
             }
         }
         return line;
