@@ -40,9 +40,46 @@ public class Server {
             this.socket = socket;
         }
 
+        private void notifyUsers(Connection connection, String userName) throws IOException {
+            for (Map.Entry<String, Connection> entry: connectionMap.entrySet()) {
+                String user = entry.getKey();
+                if (!user.equals(userName)) {
+                    connection.send(new Message(MessageType.USER_ADDED, user));
+                }
+            }
+        }
+
         @Override
         public void run() {
             //logic to handle connection (read/write)
+        }
+
+        private String serverHandshake(Connection connection) throws IOException, ClassNotFoundException {
+            while (true) {
+                connection.send(new Message(MessageType.NAME_REQUEST));
+
+                Message message = connection.receive();
+                if (message.getType() != MessageType.USER_NAME) {
+                    ConsoleHelper.writeMessage("Recieved message from " + socket.getRemoteSocketAddress() + ". Message type does not match protocol.");
+                    continue;
+                }
+
+                String userName = message.getData();
+
+                if (userName.isEmpty()) {
+                    ConsoleHelper.writeMessage("Empty name is used by " + socket.getRemoteSocketAddress());
+                    continue;
+                }
+
+                if (connectionMap.containsKey(userName)) {
+                    ConsoleHelper.writeMessage("The name for connection is already used by " + socket.getRemoteSocketAddress());
+                    continue;
+                }
+                connectionMap.put(userName, connection);
+
+                connection.send(new Message(MessageType.NAME_ACCEPTED));
+                return userName;
+            }
         }
     }
 
