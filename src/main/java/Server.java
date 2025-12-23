@@ -40,6 +40,20 @@ public class Server {
             this.socket = socket;
         }
 
+        private void serverMainLoop(Connection connection, String userName) throws IOException, ClassNotFoundException {
+            while (true) {
+                Message message = connection.receive();
+                if (message.getType() == MessageType.TEXT) {
+                    String data = userName + ": " + message.getData();
+                    Message newMessage = new Message(MessageType.TEXT, data);
+                    sendBroadcastMessage(newMessage);
+                } else {
+                    ConsoleHelper.writeMessage("Received message from " + socket.getRemoteSocketAddress() +
+                            ". Message type does not match the protocol.");
+                }
+            }
+        }
+
         private void notifyUsers(Connection connection, String userName) throws IOException {
             for (Map.Entry<String, Connection> entry: connectionMap.entrySet()) {
                 String user = entry.getKey();
