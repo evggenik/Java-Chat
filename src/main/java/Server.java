@@ -65,7 +65,28 @@ public class Server {
 
         @Override
         public void run() {
-            //logic to handle connection (read/write)
+            ConsoleHelper.writeMessage("A new connection was established with  " + socket.getRemoteSocketAddress());
+            String userName = null;
+
+            try (Connection connection = new Connection(socket)) {
+                userName = serverHandshake(connection);
+
+                sendBroadcastMessage(new Message(MessageType.USER_ADDED, userName));
+
+                notifyUsers(connection, userName);
+
+                serverMainLoop(connection, userName);
+
+            } catch (IOException | ClassNotFoundException e) {
+                ConsoleHelper.writeMessage("An error during the data exchange " + socket.getRemoteSocketAddress());
+            }
+
+            if (userName != null) {
+                connectionMap.remove(userName);
+                sendBroadcastMessage(new Message(MessageType.USER_REMOVED, userName));
+            }
+
+            ConsoleHelper.writeMessage("The connection with  " + socket.getRemoteSocketAddress() + " is closed.");
         }
 
         private String serverHandshake(Connection connection) throws IOException, ClassNotFoundException {
