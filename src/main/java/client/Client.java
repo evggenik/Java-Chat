@@ -11,6 +11,11 @@ public class Client {
     protected Connection connection;
     private volatile boolean clientConnected;
 
+    public static void main(String[] args) {
+        Client client = new Client();
+        client.run();
+    }
+
     public class SocketThread extends Thread {
 
     }
@@ -45,6 +50,37 @@ public class Client {
         } catch (IOException e) {
             ConsoleHelper.writeMessage("The message can not be delivered");
             clientConnected = false;
+        }
+    }
+
+    public void run() {
+        SocketThread socketThread = getSocketThread();
+        socketThread.setDaemon(true);
+        socketThread.start();
+
+        try {
+            synchronized (this) {
+                while (!clientConnected) {
+                    wait();
+                }
+            }
+
+        } catch (InterruptedException e) {
+            ConsoleHelper.writeMessage("Connection failed");
+            return;
+        }
+
+        if (clientConnected)
+            ConsoleHelper.writeMessage("Connection is established. Type \"exit\" to exit the program.");
+        else
+            ConsoleHelper.writeMessage("An error occurred during the client's work.");
+
+        while (clientConnected) {
+            String text = ConsoleHelper.readString();
+            if (text.equalsIgnoreCase("exit"))
+                break;
+            if (shouldSendTextFromConsole())
+                sendTextMessage(text);
         }
     }
 }
