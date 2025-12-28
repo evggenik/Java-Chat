@@ -6,6 +6,7 @@ import main.java.Message;
 import main.java.MessageType;
 
 import java.io.IOException;
+import java.net.Socket;
 
 public class Client {
     protected Connection connection;
@@ -17,6 +18,19 @@ public class Client {
     }
 
     public class SocketThread extends Thread {
+        @Override
+        public void run() {
+            String srvAddress = getServerAddress();
+            int srvPort = getServerPort();
+            try {
+                Socket socket = new Socket(srvAddress, srvPort);
+                connection = new Connection(socket);
+                clientHandshake();
+                clientMainLoop();
+            } catch (IOException | ClassNotFoundException e) {
+                notifyConnectionStatusChanged(false);
+            }
+        }
 
         protected void clientHandshake() throws IOException, ClassNotFoundException {
             while (true) {
