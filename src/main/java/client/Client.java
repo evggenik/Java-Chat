@@ -18,6 +18,43 @@ public class Client {
 
     public class SocketThread extends Thread {
 
+        protected void clientHandshake() throws IOException, ClassNotFoundException {
+            while (true) {
+                Message msg = connection.receive();
+                if (msg.getType() == MessageType.NAME_REQUEST) {
+                    String userName = getUserName();
+                    Message newMsg = new Message(MessageType.USER_NAME, userName);
+                    connection.send(newMsg);
+                } else if (msg.getType() == MessageType.NAME_ACCEPTED) {
+                    notifyConnectionStatusChanged(true);
+                    return;
+                } else
+                    throw new IOException("Unexpected MessageType");
+            }
+        }
+
+        protected void clientMainLoop() throws IOException, ClassNotFoundException {
+            while (true) {
+                Message msg = connection.receive();
+                if (msg.getType() == null) {
+                    throw new IOException("Unexpected MessageType");
+                }
+                switch (msg.getType()) {
+                    case TEXT:
+                        processIncomingMessage(msg.getData());
+                        break;
+                    case USER_ADDED:
+                        informAboutAddingNewUser(msg.getData());
+                        break;
+                    case USER_REMOVED:
+                        informAboutDeletingNewUser(msg.getData());
+                        break;
+                    default:
+                        throw new IOException("Unexpected MessageType");
+                }
+            }
+        }
+
         protected void processIncomingMessage(String message) {
             ConsoleHelper.writeMessage(message);
         }
